@@ -9,7 +9,7 @@ export default function UpdateProfilePage() {
 
     const handleUpdate = async () => {
         const idToken = "YOUR_USER_ID_TOKEN";
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:update?key=YOUR_API_KEY`;
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyAkZ5_k7xtuob1y7lly0zFobPUCnKwI-KU`;
 
         try {
             const response = await axios.post(url, {
