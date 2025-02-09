@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, Form, Container, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getAuth } from "firebase/auth";
 
@@ -8,9 +9,9 @@ export default function UpdateProfilePage() {
     const [photoUrl, setPhotoUrl] = useState("");
     const [message, setMessage] = useState(null);
     const [idToken, setIdToken] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        // Fetch idToken dynamically when the page loads
         const fetchIdToken = async () => {
             try {
                 const auth = getAuth();
@@ -53,6 +54,10 @@ export default function UpdateProfilePage() {
         }
     };
 
+    const handleCancel = () => {
+        navigate(-1);
+    };
+
     return (
         <Container className="mt-5">
             <h2>Update Profile</h2>
@@ -78,9 +83,14 @@ export default function UpdateProfilePage() {
                     />
                 </Form.Group>
 
-                <Button variant="primary" onClick={handleUpdate}>
-                    Update
-                </Button>
+                <div className="d-flex justify-content-between">
+                    <Button variant="primary" onClick={handleUpdate}>
+                        Update
+                    </Button>
+                    <Button variant="secondary" onClick={handleCancel}>
+                        Cancel
+                    </Button>
+                </div>
             </Form>
         </Container>
     );
