@@ -4,8 +4,10 @@ import Signup from "./components/Auth/Signup";
 import Welcome from "./components/Welcome";
 import UpdateProfilePage from "./components/UpdateProfilePage";
 import ForgotPassword from "./components/Auth/ForgotPassword";
+import Expenses from "./components/Expenses";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
+import PrivateRoute from "./PrivateRoute";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -31,6 +33,7 @@ function App() {
           </>
         )}
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/expenses" element={<PrivateRoute><Expenses /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
   );

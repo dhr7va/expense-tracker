@@ -95,6 +95,9 @@ export default function UpdateProfilePage() {
                         <Card.Title className="mt-3">{profileData.displayName}</Card.Title>
                         <Card.Text>Your profile is currently displayed as shown above.</Card.Text>
                     </Card.Body>
+                    <Button variant="primary" onClick={() => navigate("/expenses")}>
+                        Track Daily Expenses
+                    </Button>
                 </Card>
             )}
 
