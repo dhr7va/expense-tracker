@@ -3,6 +3,7 @@ import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 import Welcome from "./components/Welcome";
 import UpdateProfilePage from "./components/UpdateProfilePage";
+import ForgotPassword from "./components/Auth/ForgotPassword";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 
@@ -29,6 +30,7 @@ function App() {
             <Route path="/update-profile" element={<UpdateProfilePage />} />
           </>
         )}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </BrowserRouter>
   );

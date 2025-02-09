@@ -64,6 +64,16 @@ function Login() {
                         </Button>
                     </Form>
                     <p className="mt-3 text-center">
+                        Forgot your password?{" "}
+                        <span
+                            style={{ color: "blue", cursor: "pointer" }}
+                            onClick={() => navigate("/forgot-password")}
+                        >
+                            Reset it here
+                        </span>
+                    </p>
+
+                    <p className="mt-3 text-center">
                         Don’t have an account?{" "}
                         <span
                             style={{ cursor: 'pointer', color: 'blue' }}
