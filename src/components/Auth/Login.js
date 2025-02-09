@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Container, Form, Button, Row, Col, Alert } from "react-bootstrap";
 
@@ -8,10 +8,18 @@ function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const auth = getAuth();
+
+    useEffect(() => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                navigate("/welcome");
+            }
+        });
+    }, [auth, navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        const auth = getAuth();
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -56,7 +64,13 @@ function Login() {
                         </Button>
                     </Form>
                     <p className="mt-3 text-center">
-                        Don’t have an account? <span style={{ cursor: 'pointer', color: 'blue' }} onClick={() => navigate('/signup')}>Sign up</span>
+                        Don’t have an account?{" "}
+                        <span
+                            style={{ cursor: 'pointer', color: 'blue' }}
+                            onClick={() => navigate('/signup')}
+                        >
+                            Sign up
+                        </span>
                     </p>
                 </Col>
             </Row>
