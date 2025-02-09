@@ -1,18 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Form, Container, Alert } from "react-bootstrap";
 import axios from "axios";
+import { getAuth } from "firebase/auth";
 
 export default function UpdateProfilePage() {
     const [fullName, setFullName] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
     const [message, setMessage] = useState(null);
+    const [idToken, setIdToken] = useState(null);
+
+    useEffect(() => {
+        // Fetch idToken dynamically when the page loads
+        const fetchIdToken = async () => {
+            try {
+                const auth = getAuth();
+                const user = auth.currentUser;
+                if (user) {
+                    const token = await user.getIdToken();
+                    setIdToken(token);
+                } else {
+                    setMessage({ type: "danger", text: "User not logged in." });
+                }
+            } catch (error) {
+                setMessage({ type: "danger", text: "Failed to retrieve token." });
+            }
+        };
+        fetchIdToken();
+    }, []);
 
     const handleUpdate = async () => {
-        const idToken = "YOUR_USER_ID_TOKEN";
+        if (!idToken) {
+            setMessage({ type: "danger", text: "Invalid user session." });
+            return;
+        }
+
         const url = `https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyAkZ5_k7xtuob1y7lly0zFobPUCnKwI-KU`;
 
         try {
-            const response = await axios.post(url, {
+            await axios.post(url, {
                 idToken,
                 displayName: fullName,
                 photoUrl,
@@ -23,7 +48,7 @@ export default function UpdateProfilePage() {
         } catch (error) {
             setMessage({
                 type: "danger",
-                text: "Failed to update profile. Please try again.",
+                text: error.response?.data?.error?.message || "Failed to update profile. Please try again.",
             });
         }
     };

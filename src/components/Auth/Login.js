@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
-import { Container, Form, Button, Row, Col, Alert } from 'react-bootstrap';
-import app from "../../firebase";
+import { useState } from "react";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { Container, Form, Button, Row, Col, Alert } from "react-bootstrap";
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -15,8 +14,10 @@ function Login() {
         const auth = getAuth();
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            localStorage.setItem('authToken', 'true');
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const idToken = await userCredential.user.getIdToken();
+
+            localStorage.setItem('authToken', idToken);
             navigate('/welcome');
         } catch (error) {
             setError('Invalid credentials. Please try again.');
