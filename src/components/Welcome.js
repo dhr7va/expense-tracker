@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getAuth, signOut, sendEmailVerification } from "firebase/auth";
 import { Button, Container, Alert, Row, Col } from "react-bootstrap";
 
@@ -34,7 +34,7 @@ function Welcome() {
         try {
             await signOut(auth);
             localStorage.removeItem("authToken");
-            navigate("/login");
+            navigate("/");
         } catch (error) {
             alert("Failed to logout. Please try again.");
         }
@@ -43,21 +43,27 @@ function Welcome() {
     return (
         <Container className="mt-5 text-center">
             {user && (
-                <Alert variant="success">
-                    Welcome, <strong>{user.email}</strong>
-                </Alert>
+                <>
+                    <Alert variant="success">
+                        Welcome,to Expense Tracker <strong>{user.email}</strong>
+                    </Alert>
+                    <Alert variant="warning" className="mt-3">
+                        Your profile is incomplete: please complete your profile{" "}
+                        <Link to="/update-profile">here</Link>.
+                    </Alert>
+                </>
             )}
 
             {!isVerified ? (
                 <>
-                    <Alert variant="warning">
-                        Your profile is incomplete. Please verify your email.
+                    <Alert variant="danger">
+                        Please verify your email.
                     </Alert>
                     {emailSent && <Alert variant="info">Verification email sent. Check your inbox.</Alert>}
                     {error && <Alert variant="danger">{error}</Alert>}
                 </>
             ) : (
-                <Alert variant="success">Your profile is complete. Thank you!</Alert>
+                <Alert variant="success">Your Email is verified.Thank you!</Alert>
             )}
 
             <Row className="mt-4">
