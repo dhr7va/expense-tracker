@@ -1,47 +1,66 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Container, Form, Button, Row, Col, Tabs, Tab, ListGroup, Alert } from "react-bootstrap";
 import dayjs from "dayjs";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Expenses() {
-    const [amount, setAmount] = useState("");
+    const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
     const [expenses, setExpenses] = useState([]);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("daily");
-    const navigate = useNavigate();
+
+    const FIREBASE_URL = "https://expense-tracker-b35a6-default-rtdb.firebaseio.com/expenses.json";
 
     useEffect(() => {
-        const savedTab = localStorage.getItem("activeTab");
-        if (savedTab) setActiveTab(savedTab);
+        fetchExpenses();
     }, []);
 
-    const handleTabSelect = (tab) => {
-        setActiveTab(tab);
-        localStorage.setItem("activeTab", tab);
+    const fetchExpenses = async () => {
+        try {
+            const response = await axios.get(FIREBASE_URL);
+            if (response.data) {
+                const fetchedExpenses = Object.keys(response.data).map(key => ({
+                    id: key,
+                    ...response.data[key],
+                }));
+                setExpenses(fetchedExpenses);
+            }
+        } catch (err) {
+            console.error("Error fetching expenses:", err);
+            setError("Failed to load expenses.");
+        }
     };
 
-    const handleAddExpense = (e) => {
+    const handleAddExpense = async (e) => {
         e.preventDefault();
 
-        if (!amount || !description || !category) {
-            setError("Please fill out all fields to add an expense.");
+        if (!price || !description || !category) {
+            setError("All fields are required.");
             return;
         }
 
         const expense = {
-            amount: parseFloat(amount).toFixed(2),
+            price,
             description,
             category,
             date: dayjs().format("YYYY-MM-DD"),
         };
 
-        setExpenses([...expenses, expense]);
-        setAmount("");
-        setDescription("");
-        setCategory("");
-        setError(null);
+        try {
+            const response = await axios.post(FIREBASE_URL, expense);
+            if (response.status === 200) {
+                setExpenses([...expenses, { ...expense, id: response.data.name }]);
+                setPrice("");
+                setDescription("");
+                setCategory("");
+                setError(null);
+            }
+        } catch (err) {
+            console.error("Error adding expense:", err);
+            setError("Failed to add expense.");
+        }
     };
 
     const filterExpenses = (type) => {
@@ -64,10 +83,6 @@ function Expenses() {
     return (
         <Container className="mt-5">
             <h2 className="text-center">Daily Expenses Tracker</h2>
-            <Button variant="secondary" className="mb-3" onClick={() => navigate(-1)}>
-                Go Back
-            </Button>
-
             {error && <Alert variant="danger">{error}</Alert>}
 
             <Form onSubmit={handleAddExpense} className="mb-4">
@@ -77,9 +92,9 @@ function Expenses() {
                             <Form.Label>Amount Spent</Form.Label>
                             <Form.Control
                                 type="number"
-                                placeholder="Enter amount"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="Enter Amount"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
                                 required
                             />
                         </Form.Group>
@@ -122,7 +137,7 @@ function Expenses() {
                 </Button>
             </Form>
 
-            <Tabs activeKey={activeTab} onSelect={handleTabSelect} className="mb-3">
+            <Tabs activeKey={activeTab} onSelect={(tab) => setActiveTab(tab)} className="mb-3">
                 <Tab eventKey="daily" title="Daily">
                     <ExpenseList expenses={filterExpenses("daily")} />
                 </Tab>
@@ -144,9 +159,9 @@ function ExpenseList({ expenses }) {
 
     return (
         <ListGroup>
-            {expenses.map((expense, index) => (
-                <ListGroup.Item key={index}>
-                    <strong>{expense.category}:</strong> ${expense.amount} - {expense.description} on {expense.date}
+            {expenses.map((expense) => (
+                <ListGroup.Item key={expense.id}>
+                    <strong>{expense.category}:</strong> ${expense.price} - {expense.description} on {expense.date}
                 </ListGroup.Item>
             ))}
         </ListGroup>
