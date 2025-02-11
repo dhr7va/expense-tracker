@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Container, Form, Button, Row, Col, Tabs, Tab, ListGroup, Alert, Modal } from "react-bootstrap";
+import { Container, Form, Button, Row, Col, Tabs, Tab, ListGroup, Alert } from "react-bootstrap";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -11,10 +11,9 @@ function Expenses() {
     const [expenses, setExpenses] = useState([]);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("daily");
-    const [showModal, setShowModal] = useState(false);
-    const [currentExpense, setCurrentExpense] = useState(null);
-    const navigate = useNavigate();
+    const [editingExpense, setEditingExpense] = useState(null); // Track editing state
 
+    const navigate = useNavigate();
     const apiUrl = "https://expense-tracker-b35a6-default-rtdb.firebaseio.com/expenses.json";
 
     useEffect(() => {
@@ -36,7 +35,7 @@ function Expenses() {
         }
     };
 
-    const handleAddExpense = async (e) => {
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
 
         if (!price || !description || !category) {
@@ -44,21 +43,28 @@ function Expenses() {
             return;
         }
 
-        const expense = {
+        const expenseData = {
             price,
             description,
             category,
-            date: dayjs().format("YYYY-MM-DD"),
+            date: editingExpense ? editingExpense.date : dayjs().format("YYYY-MM-DD"),
         };
 
         try {
-            const response = await axios.post(apiUrl, expense);
-            if (response.status === 200) {
-                setExpenses([...expenses, { id: response.data.name, ...expense }]);
-                resetForm();
+            if (editingExpense) {
+                // Update existing expense
+                await axios.put(`https://expense-tracker-b35a6-default-rtdb.firebaseio.com/expenses/${editingExpense.id}.json`, expenseData);
+                setExpenses(expenses.map((exp) => (exp.id === editingExpense.id ? { id: exp.id, ...expenseData } : exp)));
+            } else {
+                // Add new expense
+                const response = await axios.post(apiUrl, expenseData);
+                if (response.status === 200) {
+                    setExpenses([...expenses, { id: response.data.name, ...expenseData }]);
+                }
             }
+            resetForm();
         } catch (error) {
-            setError("Failed to add expense.");
+            setError("Failed to save expense.");
         }
     };
 
@@ -66,6 +72,7 @@ function Expenses() {
         setPrice("");
         setDescription("");
         setCategory("");
+        setEditingExpense(null);
         setError(null);
     };
 
@@ -79,39 +86,10 @@ function Expenses() {
     };
 
     const handleEditExpense = (expense) => {
-        setCurrentExpense(expense);
+        setEditingExpense(expense);
         setPrice(expense.price);
         setDescription(expense.description);
         setCategory(expense.category);
-        setShowModal(true);
-    };
-
-    const handleUpdateExpense = async () => {
-        if (!price || !description || !category) {
-            setError("All fields are required.");
-            return;
-        }
-
-        const updatedExpense = {
-            price,
-            description,
-            category,
-            date: currentExpense.date,
-        };
-
-        try {
-            await axios.put(`https://expense-tracker-b35a6-default-rtdb.firebaseio.com/expenses/${currentExpense.id}.json`, updatedExpense);
-            setExpenses(expenses.map((exp) => (exp.id === currentExpense.id ? { id: exp.id, ...updatedExpense } : exp)));
-            closeEditModal();
-        } catch (error) {
-            setError("Failed to update expense.");
-        }
-    };
-
-    const closeEditModal = () => {
-        setShowModal(false);
-        setCurrentExpense(null);
-        resetForm();
     };
 
     const filterExpenses = (type) => {
@@ -137,11 +115,12 @@ function Expenses() {
             <button onClick={() => navigate(-1)}>Go Back</button>
             {error && <Alert variant="danger">{error}</Alert>}
 
-            <Form onSubmit={handleAddExpense} className="mb-4">
+            {/* Expense Form */}
+            <Form onSubmit={handleFormSubmit} className="mb-4">
                 <Row>
                     <Col md={4}>
                         <Form.Group className="mb-3">
-                            <Form.Label>price Spent</Form.Label>
+                            <Form.Label>Price Spent</Form.Label>
                             <Form.Control
                                 type="number"
                                 placeholder="Enter price"
@@ -185,10 +164,17 @@ function Expenses() {
                 </Row>
 
                 <Button variant="primary" type="submit" className="w-100">
-                    Add Expense
+                    {editingExpense ? "Update Expense" : "Add Expense"}
                 </Button>
+
+                {editingExpense && (
+                    <Button variant="secondary" className="w-100 mt-2" onClick={resetForm}>
+                        Cancel Edit
+                    </Button>
+                )}
             </Form>
 
+            {/* Expense Tabs */}
             <Tabs activeKey={activeTab} onSelect={(tab) => setActiveTab(tab)} className="mb-3">
                 <Tab eventKey="daily" title="Daily">
                     <ExpenseList expenses={filterExpenses("daily")} onEdit={handleEditExpense} onDelete={handleDeleteExpense} />
@@ -200,58 +186,6 @@ function Expenses() {
                     <ExpenseList expenses={filterExpenses("yearly")} onEdit={handleEditExpense} onDelete={handleDeleteExpense} />
                 </Tab>
             </Tabs>
-
-            <Modal show={showModal} onHide={closeEditModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Expense</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>price Spent</Form.Label>
-                            <Form.Control
-                                type="number"
-                                placeholder="Enter price"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Description</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="Enter description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Category</Form.Label>
-                            <Form.Select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                            >
-                                <option value="">Select Category</option>
-                                <option value="Food">Food</option>
-                                <option value="Petrol">Petrol</option>
-                                <option value="Salary">Salary</option>
-                                <option value="Entertainment">Entertainment</option>
-                                <option value="Others">Others</option>
-                            </Form.Select>
-                        </Form.Group>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={closeEditModal}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" onClick={handleUpdateExpense}>
-                        Update Expense
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </Container>
     );
 }
